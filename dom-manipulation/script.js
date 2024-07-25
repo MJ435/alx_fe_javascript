@@ -3,17 +3,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const newQuoteButton = document.getElementById('newQuote');
   const newQuoteText = document.getElementById('newQuoteText');
   const newQuoteCategory = document.getElementById('newQuoteCategory');
+  const categoryFilter = document.getElementById('categoryFitler');
 
   let quotes = loadQuotes();
+  populateCategories();
+  loadLastFilter();
+
   newQuoteButton.addEventListener('click', showRandomQuote);
 
   function showRandomQuote(){
-    if (quotes.length === 0){
+    const filteredQuotes = getFilteredQuotes();
+    if (filteredQuotes.length === 0){
         quoteDisplay.textContent = "No quotes available.";
         return;
     }
-    const randomIndex = Math.floor(Math,random() * quotes.length);
-    const randomQuote = quotes[randomIndex];
+    const randomIndex = Math.floor(Math,random() * filteredQuotes.length);
+    const randomQuote = filteredQuotes[randomIndex];
     quoteDisplay.textContext = `"${randomQuote.text}" - ${randomQuote.category}`;
 
     sessionStorage.setItem('lastViewQuote', JSON.stringify(randomQuote));
@@ -30,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     quotes.push({ text: text, category: category });
     saveQuotes();
+    populateCategories();
 
     newQuoteText.value = "";
     newQuoteCategory.value = "";
@@ -49,6 +55,48 @@ document.addEventListener("DOMContentLoaded", () => {
        { text: "The fact that he allowed you walk his dog, doesn't mean he will allow you marry his daughter.", category: "Motivation" }
      ];
    }
+
+   function populateCategories() {
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+    categories.forEach(category => {
+      const option = document.createElement('option');
+      option.value = category;
+      option.textContent = category;
+      categoryFilter.appendChild(option);
+    });
+  }
+
+  window.filterQuotes = function() {
+    const selectedCategory = categoryFilter.value;
+    localStorage.setItem('selectedCategory', selectedCategory);
+    displayQuotes(selectedCategory);
+  }
+
+  function getFilteredQuotes() {
+    const selectedCategory = categoryFilter.value;
+    if (selectedCategory === "all") {
+      return quotes;
+    }
+    return quotes.filter(quote => quote.category === selectedCategory);
+  }
+
+  function displayQuotes(selectedCategory) {
+    const filteredQuotes = selectedCategory === "all" ? quotes : quotes.filter(quote => quote.category === selectedCategory);
+    if (filteredQuotes.length === 0) {
+      quoteDisplay.textContent = "No quotes available.";
+      return;
+    }
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const randomQuote = filteredQuotes[randomIndex];
+    quoteDisplay.textContent = `"${randomQuote.text}" - ${randomQuote.category}`;
+  }
+
+  function loadLastFilter() {
+    const selectedCategory = localStorage.getItem('selectedCategory') || "all";
+    categoryFilter.value = selectedCategory;
+    displayQuotes(selectedCategory);
+  }
  
    window.exportToJsonFile = function() {
      const dataStr = JSON.stringify(quotes);
