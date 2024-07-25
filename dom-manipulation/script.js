@@ -11,6 +11,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   newQuoteButton.addEventListener('click', showRandomQuote);
 
+  const serverUr1 = 'https://jsonplaceholder.typicode.com/posts';
+
+   async function fetchQuotesFromServer() {
+      try {
+        const response = await fetch(serverUrl);
+        const serverQuotes = await response.json();
+        return serverQuotes.map(quote => ({ text: quote.title, category: "Server" })); // Simulate format
+      } catch (error) {
+        console.error("Error fetching quotes from server:", error);
+        return [];
+      }
+    }
+  
+    async function syncQuotesWithServer() {
+      const serverQuotes = await fetchQuotesFromServer();
+      const combinedQuotes = mergeQuotes(quotes, serverQuotes);
+      quotes = combinedQuotes;
+      saveQuotes();
+      populateCategories();
+      displayQuotes(categoryFilter.value);
+    }
+  
+    function mergeQuotes(localQuotes, serverQuotes) {
+      const mergedQuotes = [...localQuotes];
+      const localTexts = new Set(localQuotes.map(quote => quote.text));
+      serverQuotes.forEach(quote => {
+        if (!localTexts.has(quote.text)) {
+          mergedQuotes.push(quote);
+        }
+      });
+      return mergedQuotes;
+    }
+  
+    setInterval(syncQuotesWithServer, 60000); 
+
   function showRandomQuote(){
     const filteredQuotes = getFilteredQuotes();
     if (filteredQuotes.length === 0){
